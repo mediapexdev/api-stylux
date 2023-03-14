@@ -54,7 +54,7 @@ class TabinventaireController extends Controller
      * @param  \App\Models\ Tabinventaire  $tabinventaire
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,  Tabinventaire $tabinventaire)
+    public function update(Request $request,  Tabinventaire $tabinventaire,$id)
     {
         
         $tabinventaire = Tabinventaire::find($id);

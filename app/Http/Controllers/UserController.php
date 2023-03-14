@@ -20,9 +20,7 @@ class UserController extends Controller
      */
     public function index()
     {
-
-
-        return User::withTrashed()->with('role')->get();
+        return User::where('role_id', '!=', '4')->withTrashed()->with('role')->get();
     }
 
     /**

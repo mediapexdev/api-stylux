@@ -579,8 +579,6 @@ class CaisseController extends Controller
                     }
                 }
                 //if($caisse->pompe->pistolets)
-
-
             }
             $day[] = ['jour' => $jour, 'gasoil' => $totalGaz, 'super' => $totalSup];
         }
