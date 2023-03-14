@@ -75,13 +75,8 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-<<<<<<< HEAD
             'search_path' => 'public',
             'sslmode' => 'prefer',
-=======
-            'schema' => 'public',
-            'sslmode' => 'require',
->>>>>>> 3f16ebfc6af88d3776a3c2f1066ef7d82f74030c
         ],
 
         'sqlsrv' => [
