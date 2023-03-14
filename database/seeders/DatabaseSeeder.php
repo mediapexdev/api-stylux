@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Role::create([
             'nom'=>'admin'
         ]);
-      /*  
+        
         \App\Models\User::create([
         	'name'=>'Malang',
         	'email'=>'malang@gmail.com',
@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
         ]);
         \App\Models\User::create([
         	'name'=>'Ganius',
-        	'email'=>'ganius@gmail.com'
+        	'email'=>'ganius@gmail.com',
         	'role_id'=>(3),
         	'password'=>bcrypt(1234)
         ]);
@@ -56,12 +56,15 @@ class DatabaseSeeder extends Seeder
         	'email'=>'rawan@gmail.com',
         	'role_id'=>(2),
         	'password'=>bcrypt(1234)
-        ]);*/
+        ]);
          \App\Models\User::create([
         	'name'=>'Root',
         	'email'=>'root@root.com',
         	'role_id'=>(4),
         	'password'=>bcrypt(1234)
         ]);
+
+        $l = new LubrifiantsTableSeeder();
+        $l->run();
     }
 }
