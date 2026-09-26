@@ -1,0 +1,105 @@
+/* Figtree (auto-hebergee) */
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("./figtree/figtree-latin-ext-wght-normal.woff2") format("woff2-variations"),
+    url("./figtree/figtree-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("./figtree/figtree-latin-wght-normal.woff2") format("woff2-variations"),
+    url("./figtree/figtree-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Figtree";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("./figtree/figtree-latin-ext-wght-italic.woff2") format("woff2-variations"),
+    url("./figtree/figtree-latin-ext-wght-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Figtree";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("./figtree/figtree-latin-wght-italic.woff2") format("woff2-variations"),
+    url("./figtree/figtree-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Dax";
+  src: url("./Dax.ttf");
+}
+
+@font-face {
+  font-family: "Nexa";
+  src: url("./Nexa-Font/NexaLight.otf");
+  src: url("./Nexa-Font/NexaRegular.otf"), url("./Nexa-Font/Nexa\ Light.otf"),
+    url("./Nexa-Font/NexaBook.otf"), url("./Nexa-Font/NexaLight.otf"),
+    url("./Nexa-Font/NexaHeavy.otf"),
+    url("./Nexa-Font/NexaBlack.otf") url("./Nexa-Font/NexaBold.otf"),
+    url("./Nexa-Font/NexaXBold.otf");
+  font-style: initial;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: bold !important;
+}
+.btn,
+.badge th,
+a {
+  font-size: 14px !important;
+  font-weight: bold !important;
+}
+th,
+td {
+  font-size: 14px;
+}
+select.form-control{
+  font-size: 14px !important;
+}
+.titre{
+  text-align: center;
+  text-transform: uppercase;
+  padding-top: 10px;
+  font-weight: bold !important;
+  
+}
+
+.titre-dash{
+  font-size: 20px;
+  padding: 10px;
+  text-transform: uppercase !important;
+  font-weight: bold !important;
+  padding-top: 12px;
+}
+
+/* Police Figtree sur toute l'application */
+:root {
+  --bs-font-sans-serif: "Figtree", sans-serif;
+  --bs-body-font-family: "Figtree", sans-serif;
+}
+
+* {
+  font-family: "Figtree", sans-serif !important;
+}
+
+

@@ -1,0 +1,222 @@
+.fichePompiste
+{
+    max-width: 1000px;
+    min-width: 700px;
+    margin: auto;
+    box-shadow: 0px 0px 5px 2px rgb(0, 0, 0, 0.5);
+    padding: 30px;
+    padding-top: 70px ;
+    padding-bottom: 70px ;
+    background-color: white;
+}
+.fichePompiste .entete-fiche
+{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.fichePompiste .info-stylux
+{
+    text-align: center;
+}
+.fichePompiste .info-stylux img
+{
+    width: 200px;
+    height: auto;
+}
+.fichePompiste .info-stylux div
+{
+    font-size: 10px;
+}
+.fichePompiste .info-jour
+{
+    max-width: 50%;
+    align-items: flex-end;
+    margin: 0px;
+}
+
+
+
+
+
+
+.fichePompiste .titre-fiche-pompiste
+{
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0px;
+    font-weight: 900;
+    font-size: 20px;
+    text-align: center;
+    width: 50%;
+    margin: auto;
+    margin-bottom: 20px;
+    font-family: "Figtree", sans-serif;
+}
+
+.fichePompiste .tableIndex .sous-titre
+{
+    font-size: 13px;
+}
+
+
+.fichePompiste .tableIndex .indexFerme
+{
+    padding: 0px !important;
+}
+.fichePompiste .tableIndex tr td > b
+{
+    font-weight: 600;
+    font-size: 14px;
+}
+.fichePompiste .tableIndex input
+{
+    border: none;
+    margin: 0px;
+    height: 32px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0);
+}
+.fichePompiste .tableIndex input:focus
+{
+    background-color: white;
+}
+
+
+
+
+.fichePompiste .sous-somme
+{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.fichePompiste .sous-somme > div
+{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.fichePompiste .sous-somme > div:first-child
+{
+    padding-right: 20px;
+}
+.fichePompiste .sous-somme > div:last-child
+{
+    padding-left: 20px;
+}
+.fichePompiste .sous-somme div span:first-child
+{
+    text-decoration: underline;
+}
+.fichePompiste .sous-somme div span:last-child
+{
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    width: 160px;
+    text-align: center;
+}
+.fichePompiste .sous-somme b
+{
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.fichePompiste .somme
+{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+.fichePompiste .somme > div
+{
+    width: 70%;
+    display: flex;
+    justify-content: space-between;
+}
+.fichePompiste .somme div span:first-child
+{
+    text-decoration: underline;
+}
+.fichePompiste .somme div span:last-child
+{
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    width: 250px;
+    text-align: center;
+}
+.fichePompiste .somme b
+{
+    font-weight: 700;
+    font-size: 17px;
+}
+
+.fichePompiste .table-valeur
+{
+    text-align: center;
+}
+.fichePompiste .table-valeur .sous-titre
+{
+    font-size: 13px;
+}
+.fichePompiste .table-valeur  tr td
+{
+    padding: 0px !important;
+}
+.fichePompiste .table-valeur tr td > b
+{
+    font-weight: 600;
+    font-size: 14px;
+}
+.fichePompiste .table-valeur input
+{
+    border: none;
+    margin: 0px;
+    height: 32px;
+    text-align: center;
+    border-radius: 0px;
+    background-color: rgba(255, 255, 255, 0);
+}
+.fichePompiste .table-valeur input:focus
+{
+    background-color: white;
+}
+
+.fichePompiste .table-resultat tr th
+{
+    text-decoration: underline;
+}
+.fichePompiste .table-resultat tr td
+{
+    text-align: center;
+}
+.fichePompiste .table-resultat input
+{
+    border: none;
+    margin: 1px;
+    height: 32px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0);
+}
+.fichePompiste .table-resultat .td-saisi
+{
+    padding: 0px;
+}
+
+.fichePompiste .bordR
+{
+    border-right: 2px solid rgb(0, 0, 0, 0.8) !important;
+}
+.fichePompiste .bordL
+{
+    border-left: 2px solid rgb(0, 0, 0, 0.8) !important;
+}
+.fichePompiste .bordT
+{
+    border-top: 1.3px solid rgb(0, 0, 0, 0.8) !important;
+}
+.fichePompiste .bordB
+{
+    border-bottom: 1.3px solid rgb(0, 0, 0, 0.8) !important;
+}
+.fichePompiste .bordR2
+{
+    border-right: 1px solid rgba(0, 0, 0, 0.4) !important;
+}
