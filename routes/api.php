@@ -127,6 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::post('users-update', [UserController::class, 'update_password'])->name('users.update_password');
     Route::post('users/restaurer/{id}', [UserController::class, 'restore'])->name('users.restore');
+    Route::delete('users/{id}/definitif', [UserController::class, 'force_destroy'])->name('users.force_destroy');
 
 
 

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 
 class UserController extends Controller
@@ -85,6 +86,61 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    public function update(Request $request, $id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|string|max:255|unique:users,email,' . $user->id,
+            'role_id' => 'nullable|exists:roles,id',
+        ]);
+
+        $data = ['name' => $request->name];
+        if ($request->filled('email')) {
+            $data['email'] = $request->email;
+        }
+        if ($request->filled('role_id')) {
+            $data['role_id'] = $request->role_id;
+        }
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return $user->load('role');
+    }
+
+    /**
+     * Suppression definitive d'un utilisateur.
+     * Refusee si l'utilisateur a deja un historique (caisses, syntheses, fiches chef de piste)
+     * pour ne pas casser les rapports : dans ce cas il faut le desactiver.
+     */
+    public function force_destroy($id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        if (Auth::id() == $user->id) {
+            return response()->json(['error' => 'Vous ne pouvez pas supprimer votre propre compte.'], 422);
+        }
+
+        $historique = DB::table('caisses')->where('user_id', $user->id)->exists()
+            || DB::table('syntheses')->where('user_id', $user->id)->exists()
+            || DB::table('fiche_chef_pistes')->where('user_id', $user->id)->exists();
+
+        if ($historique) {
+            return response()->json([
+                'error' => "Cet utilisateur a deja un historique (caisses, rapports). Il ne peut pas etre supprime definitivement : desactivez-le plutot.",
+            ], 422);
+        }
+
+        $user->tokens()->delete();
+        $user->forceDelete();
+
+        return 1;
+    }
+
     public function update_password(Request $request)
     {
         $request->validate([
