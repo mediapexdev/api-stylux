@@ -23,7 +23,7 @@ class StyluxDemo
         'syntheses', 'encaissements', 'commande_cars', 'remise_cuves', 'stocks', 'receptions',
         'lavages', 'recettes', 'lubrifiants', 'accessoires', 'tablubs', 'tabaccs',
         'magasins', 'inventaires', 'tabinventaires', 'entre_m_s', 'sortie_m_s', 'entree_magasins',
-        'journees', 'fiche_chef_pistes',
+        'journees', 'fiche_chef_pistes', 'factures',
     ];
 
     /** Clients crédit Stylux (liste du gérant, septembre 2026) */

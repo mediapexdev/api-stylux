@@ -35,6 +35,7 @@ use App\Http\Controllers\CommandeCarController;
 use App\Http\Controllers\EncaissementController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\FactureController;
 use App\Http\Controllers\IlotPompePistoletController;
 use App\Http\Controllers\ReservoirPistoletController;
 use App\Http\Controllers\CategorieController;
@@ -119,6 +120,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients/{id}/encaissements', [ClientController::class, 'encaissements']);
     Route::get('clients/{id}/bons', [ClientController::class, 'bonclients']);
     Route::apiResource('clients', ClientController::class);
+    Route::post('factures/{id}/annuler', [FactureController::class, 'annuler']);
+    Route::apiResource('factures', FactureController::class)->only(['index', 'show', 'store']);
 
     Route::apiResource('ilots.pompes', IlotPompeController::class);
     Route::apiResource('categories.produits', CategorieProduitController::class);
