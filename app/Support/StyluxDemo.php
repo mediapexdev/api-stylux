@@ -124,6 +124,7 @@ class StyluxDemo
         if ($deja) {
             throw new \RuntimeException("$deja caisse(s) existent déjà sur cette période : lancez d'abord la remise à zéro.");
         }
+        $avecMode = DB::getSchemaBuilder()->hasColumn('vente_tpes', 'mode');
 
         // --- Sauvegarde du paramétrage modifié (une seule fois)
         $fichier = rtrim($dossierSauvegarde, '/\\') . DIRECTORY_SEPARATOR . self::SAUVEGARDE;
@@ -271,16 +272,26 @@ class StyluxDemo
                 $montant = round($montant, 2);
                 $cumul['montant'] += $montant;
 
-                // TPE (cartes Shell)
+                // Paiements électroniques : cartes TPE, puis Wave et Orange Money (si la colonne "mode" existe)
                 $tpe = 0;
-                $nTpe = self::ri(0, 3);
-                for ($t = 0; $t < $nTpe; $t++) {
-                    $m = self::arrondi5($montant * self::r(0.01, 0.035));
+                $paiements = [];
+                for ($t = 0, $n = self::ri(0, 3); $t < $n; $t++) {
+                    $paiements[] = ['carte', (string) self::ri(1000, 9999), self::r(0.01, 0.035)];
+                }
+                if ($avecMode) {
+                    for ($t = 0, $n = self::ri(1, 4); $t < $n; $t++) {
+                        $wave = self::r(0, 1) < 0.65;
+                        $paiements[] = [$wave ? 'wave' : 'orange_money', ($wave ? 'W' : 'OM') . self::ri(100000, 999999), self::r(0.004, 0.02)];
+                    }
+                }
+                foreach ($paiements as [$mode, $ref, $part]) {
+                    $m = self::arrondi5($montant * $part);
                     $tpe += $m;
-                    DB::table('vente_tpes')->insert([
-                        'numero_carte' => (string) self::ri(1000, 9999), 'montant' => $m, 'caisse_id' => $caisseId,
-                        'created_at' => $ts, 'updated_at' => $ts,
-                    ]);
+                    $ligne = ['numero_carte' => $ref, 'montant' => $m, 'caisse_id' => $caisseId, 'created_at' => $ts, 'updated_at' => $ts];
+                    if ($avecMode) {
+                        $ligne['mode'] = $mode;
+                    }
+                    DB::table('vente_tpes')->insert($ligne);
                 }
                 // Bons clients (ventes à crédit)
                 $bonsTotal = 0;
