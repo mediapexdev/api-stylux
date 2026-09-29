@@ -492,17 +492,15 @@ class CaisseController extends Controller
         $totalSupJ = 0;
         $totalGazJ = 0;
         foreach ($caisses as $key => $caisse) {
-            foreach ($caisse->pompe->pistolets as $piostolet) {
-                foreach ($caisse->compteurs as $compteur) {
-
-                    if ($compteur->pistolet->carburant == "gasoil") {
-                        $sortie = $compteur->indexFerE - $compteur->indexOuvE;
-                        $totalGazJ +=  $sortie;
-                    }
-                    if ($compteur->pistolet->carburant == "super") {
-                        $sortie = $compteur->indexFerE - $compteur->indexOuvE;
-                        $totalSupJ +=  $sortie;
-                    }
+            // Un seul passage par compteur (l'ancienne boucle sur les pistolets de la pompe doublait les totaux)
+            foreach ($caisse->compteurs as $compteur) {
+                $sortie = $compteur->indexFerE - $compteur->indexOuvE;
+                $carburant = strtolower(optional($compteur->pistolet)->carburant ?? '');
+                if ($carburant == "gasoil") {
+                    $totalGazJ += $sortie;
+                }
+                if ($carburant == "super") {
+                    $totalSupJ += $sortie;
                 }
             }
             $data[] = $caisse;
