@@ -37,6 +37,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\DemandeModificationController;
+use App\Http\Controllers\LubStockController;
 use App\Http\Controllers\IlotPompePistoletController;
 use App\Http\Controllers\ReservoirPistoletController;
 use App\Http\Controllers\CategorieController;
@@ -127,6 +128,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('demandes-modification', [DemandeModificationController::class, 'store']);
     Route::post('demandes-modification/{id}/accepter', [DemandeModificationController::class, 'accepter']);
     Route::post('demandes-modification/{id}/refuser', [DemandeModificationController::class, 'refuser']);
+    // Module lubrifiants (stock temps réel, inventaires)
+    Route::get('lub/produits', [LubStockController::class, 'produits']);
+    Route::post('lub/produits', [LubStockController::class, 'enregistrerProduit']);
+    Route::put('lub/produits/{id}', [LubStockController::class, 'enregistrerProduit']);
+    Route::get('lub/stock', [LubStockController::class, 'stock']);
+    Route::get('lub/mouvements', [LubStockController::class, 'mouvements']);
+    Route::post('lub/mouvements', [LubStockController::class, 'enregistrerMouvement']);
+    Route::delete('lub/mouvements/lot/{lot}', [LubStockController::class, 'annulerLot']);
+    Route::get('lub/inventaires', [LubStockController::class, 'inventaires']);
+    Route::post('lub/inventaires', [LubStockController::class, 'ouvrirInventaire']);
+    Route::get('lub/inventaires/{id}', [LubStockController::class, 'inventaire']);
+    Route::put('lub/inventaires/{id}', [LubStockController::class, 'enregistrerComptage']);
+    Route::post('lub/inventaires/{id}/valider', [LubStockController::class, 'validerInventaire']);
+    Route::delete('lub/inventaires/{id}', [LubStockController::class, 'supprimerInventaire']);
+    Route::get('lub/rapport', [LubStockController::class, 'rapport']);
 
     Route::apiResource('ilots.pompes', IlotPompeController::class);
     Route::apiResource('categories.produits', CategorieProduitController::class);

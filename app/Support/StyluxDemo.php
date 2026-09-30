@@ -24,6 +24,7 @@ class StyluxDemo
         'lavages', 'recettes', 'lubrifiants', 'accessoires', 'tablubs', 'tabaccs',
         'magasins', 'inventaires', 'tabinventaires', 'entre_m_s', 'sortie_m_s', 'entree_magasins',
         'journees', 'fiche_chef_pistes', 'factures', 'demande_modifications',
+        'lub_mouvements', 'lub_inventaires', 'lub_inventaire_lignes',
     ];
 
     /** Clients crédit Stylux (liste du gérant, septembre 2026) */
@@ -465,6 +466,9 @@ class StyluxDemo
             $nEnc++;
         }
 
+        // --- Module lubrifiants (si installé) : stock initial, réceptions, réassorts, ventes, inventaire de contrôle
+        $nLub = $this->genererLubrifiants($jours, $pompistes, $chef, $gerant);
+
         // --- Index et niveaux à jour pour la suite (le lendemain de la démo)
         foreach ($pist as $pid => $p) {
             DB::table('pistolets')->where('id', $pid)->update(['indexE' => $p['e'], 'indexM' => $p['m']]);
@@ -474,6 +478,7 @@ class StyluxDemo
         }
 
         return $this->stats = [
+            'mouvements_lubrifiants' => $nLub,
             'jours' => $nbJours,
             'du' => $debut->format('Y-m-d'),
             'au' => $fin->format('Y-m-d'),
@@ -487,6 +492,120 @@ class StyluxDemo
     }
 
     /** Crée les clients crédit Stylux manquants et renvoie la liste des id clients */
+    /** Ventes mensuelles de référence (unités, mars 2026) dans l'ordre du catalogue lub_produits */
+    const LUB_VENTES_MOIS = [243, 156, 131, 10, 1, 5, 26, 4, 32, 15, 1, 193, 91, 144, 45, 20, 4, 1, 4, 7, 2, 0];
+
+    private function genererLubrifiants($jours, $pompistes, $chef, $gerant)
+    {
+        if (!DB::getSchemaBuilder()->hasTable('lub_mouvements')) {
+            return 0;
+        }
+        $produits = DB::table('lub_produits')->orderBy('ordre')->get()->values();
+        if (!count($produits)) {
+            return 0;
+        }
+        $n = 0;
+        $mvt = function ($lot, $date, $type, $p, $emp, $q, $prix, $extra = []) use (&$n) {
+            DB::table('lub_mouvements')->insert($extra + [
+                'lot' => $lot, 'date' => $date, 'type' => $type, 'produit_id' => $p->id, 'emplacement' => $emp,
+                'quantite' => $q, 'prix_unitaire' => $prix, 'created_at' => $date . ' 12:00:00', 'updated_at' => $date . ' 12:00:00',
+            ]);
+            $n++;
+        };
+        $d0 = $jours[0]->format('Y-m-d');
+        $nbJours = count($jours);
+
+        // Stock initial : inventaire validé le premier jour
+        $invId = DB::table('lub_inventaires')->insertGetId([
+            'numero' => substr($d0, 0, 4) === '2026' ? 'INV-2026-001' : 'INV-' . substr($d0, 0, 4) . '-001',
+            'date' => $d0, 'emplacement' => 'tous', 'statut' => 'valide', 'commentaire' => 'Stock initial (démo)',
+            'user_id' => $chef, 'valide_par' => $gerant, 'valide_le' => $d0 . ' 07:45:00',
+            'created_at' => $d0 . ' 07:00:00', 'updated_at' => $d0 . ' 07:45:00',
+        ]);
+        $st = [];
+        foreach ($produits as $i => $p) {
+            $mois = self::LUB_VENTES_MOIS[$i] ?? 5;
+            $cq = max(1, (int) $p->colis_qte);
+            $pres = $cq >= 100 ? $cq : max($cq, (int) ceil($mois / 3));                     // présentoir : ~10 jours de vente
+            $mag = $cq >= 100 ? $cq * self::ri(1, 2) : $cq * max(1, (int) ceil($mois / $cq)); // magasin : ~1 mois
+            if ($mois === 0) {
+                $pres = 0;
+                $mag = $cq;
+            }
+            $st[$p->id] = ['magasin' => $mag, 'presentoir' => $pres];
+            foreach (['magasin' => $mag, 'presentoir' => $pres] as $e => $q) {
+                DB::table('lub_inventaire_lignes')->insert([
+                    'inventaire_id' => $invId, 'produit_id' => $p->id, 'emplacement' => $e, 'theorique' => 0,
+                    'compte' => $q, 'ecart' => $q, 'prix_achat' => $p->prix_achat, 'created_at' => $d0 . ' 07:00:00', 'updated_at' => $d0 . ' 07:45:00',
+                ]);
+                if ($q) {
+                    $mvt('INV-' . $invId, $d0, 'inventaire', $p, $e, $q, $p->prix_achat, ['reference' => 'INV-2026-001', 'inventaire_id' => $invId, 'user_id' => $gerant, 'commentaire' => "Stock initial"]);
+                }
+            }
+        }
+
+        foreach ($jours as $j => $d) {
+            $date = $d->format('Y-m-d');
+            // Ventes du jour, par poste
+            foreach (['matin', 'soir'] as $poste) {
+                $lot = 'VEN-' . $date . '-' . $poste;
+                $pompiste = $pompistes[($j * 2 + ($poste === 'soir')) % count($pompistes)];
+                foreach ($produits as $i => $p) {
+                    $moy = (self::LUB_VENTES_MOIS[$i] ?? 0) / 30 / 2;
+                    if ($moy <= 0) continue;
+                    $q = 0;
+                    // tirage simple autour de la moyenne
+                    $q = (int) floor($moy + self::r(0, 1));
+                    $vrac = in_array($p->unite, ['litre', 'kg'], true);
+                    if ($vrac && self::r(0, 1) < 0.5) $q = 0;
+                    if ($vrac && $q) $q = self::ri(4, 12); // vente au litre / kg
+                    if ($q <= 0) continue;
+                    // Réassort si le présentoir ne suffit pas
+                    if ($st[$p->id]['presentoir'] < $q) {
+                        $colis = max(1, (int) $p->colis_qte);
+                        if ($st[$p->id]['magasin'] < $colis) {
+                            // Réception fournisseur (Vivo Energy) : un mois de stock
+                            $recu = $colis * max(2, (int) ceil((self::LUB_VENTES_MOIS[$i] ?? 12) / $colis));
+                            $mvt('REC-' . $date . '-' . $p->id, $date, 'reception', $p, 'magasin', $recu, $p->prix_achat, ['reference' => 'BL-' . self::ri(40000, 49999), 'user_id' => $chef]);
+                            $st[$p->id]['magasin'] += $recu;
+                        }
+                        $mvt('REA-' . $date . '-' . $p->id, $date, 'reassort', $p, 'magasin', -$colis, $p->prix_achat, ['user_id' => $chef]);
+                        $mvt('REA-' . $date . '-' . $p->id, $date, 'reassort', $p, 'presentoir', $colis, $p->prix_achat, ['user_id' => $chef]);
+                        $st[$p->id]['magasin'] -= $colis;
+                        $st[$p->id]['presentoir'] += $colis;
+                    }
+                    $q = min($q, $st[$p->id]['presentoir']);
+                    if ($q <= 0) continue;
+                    $mvt($lot, $date, 'vente', $p, 'presentoir', -$q, $p->prix_vente, ['poste' => $poste, 'pompiste_id' => $pompiste, 'user_id' => $chef]);
+                    $st[$p->id]['presentoir'] -= $q;
+                }
+            }
+
+            // Inventaire de contrôle des présentoirs à mi-mois, avec deux petits écarts
+            if ($j === (int) floor($nbJours / 2)) {
+                $inv2 = DB::table('lub_inventaires')->insertGetId([
+                    'numero' => 'INV-2026-002', 'date' => $date, 'emplacement' => 'presentoir', 'statut' => 'valide',
+                    'commentaire' => 'Contrôle de mi-mois (démo)', 'user_id' => $chef, 'valide_par' => $gerant, 'valide_le' => $date . ' 19:30:00',
+                    'created_at' => $date . ' 18:00:00', 'updated_at' => $date . ' 19:30:00',
+                ]);
+                foreach ($produits as $i => $p) {
+                    $theo = $st[$p->id]['presentoir'];
+                    $ecart = ($i === 0 && $theo >= 1) ? -1 : (($i === 13 && $theo >= 1) ? -1 : 0);
+                    DB::table('lub_inventaire_lignes')->insert([
+                        'inventaire_id' => $inv2, 'produit_id' => $p->id, 'emplacement' => 'presentoir', 'theorique' => $theo,
+                        'compte' => $theo + $ecart, 'ecart' => $ecart, 'prix_achat' => $p->prix_achat,
+                        'created_at' => $date . ' 18:00:00', 'updated_at' => $date . ' 19:30:00',
+                    ]);
+                    if ($ecart) {
+                        $mvt('INV-' . $inv2, $date, 'inventaire', $p, 'presentoir', $ecart, $p->prix_achat, ['reference' => 'INV-2026-002', 'inventaire_id' => $inv2, 'user_id' => $gerant, 'commentaire' => "Écart d'inventaire"]);
+                        $st[$p->id]['presentoir'] += $ecart;
+                    }
+                }
+            }
+        }
+        return $n;
+    }
+
     private function assurerClients()
     {
         $existants = DB::table('clients')->whereNull('deleted_at')->get();
