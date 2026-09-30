@@ -187,7 +187,7 @@ class LubStockController extends Controller
     public function annulerLot(Request $request, $lot)
     {
         $this->exigerGerant($request);
-        $n = LubMouvement::where('lot', $lot)->where('type', '!=', 'inventaire')->delete();
+        $n = LubMouvement::where('lot', $lot)->whereNotIn('type', ['inventaire', 'initial'])->delete();
         if (!$n) {
             return response()->json(['message' => 'Opération introuvable ou non annulable.'], 422);
         }
@@ -288,16 +288,19 @@ class LubStockController extends Controller
         DB::transaction(function () use ($inv, $request) {
             $stocks = $this->stocks($inv->date);
             $lot = 'INV-' . $inv->id;
+            // Produits jamais mouvementés : le comptage constitue leur stock initial (pas un écart)
+            $dejaMouvementes = LubMouvement::distinct()->pluck('produit_id')->flip();
             foreach ($inv->lignes as $l) {
                 $theo = $stocks[$l->produit_id][$l->emplacement] ?? 0;
                 $ecart = round($l->compte - $theo, 3);
                 $l->update(['theorique' => $theo, 'ecart' => $ecart]);
                 if (abs($ecart) > 0.0005) {
+                    $initial = !isset($dejaMouvementes[$l->produit_id]);
                     LubMouvement::create([
-                        'lot' => $lot, 'date' => $inv->date, 'type' => 'inventaire', 'produit_id' => $l->produit_id,
+                        'lot' => $lot, 'date' => $inv->date, 'type' => $initial ? 'initial' : 'inventaire', 'produit_id' => $l->produit_id,
                         'emplacement' => $l->emplacement, 'quantite' => $ecart, 'prix_unitaire' => $l->prix_achat,
                         'reference' => $inv->numero, 'inventaire_id' => $inv->id, 'user_id' => optional($request->user())->id,
-                        'commentaire' => 'Écart d\'inventaire',
+                        'commentaire' => $initial ? 'Stock initial' : 'Écart d\'inventaire',
                     ]);
                 }
             }
@@ -340,7 +343,11 @@ class LubStockController extends Controller
             $reassort = $m->where('type', 'reassort')->where('emplacement', 'presentoir')->sum('quantite');
             $ajust = $m->whereIn('type', ['ajustement'])->sum('quantite');
             $ecartsInv = $m->where('type', 'inventaire')->sum('quantite');
-            $sf = $siM + $siP + $m->sum('quantite');
+            // Le stock initial saisi par inventaire dans le mois s'ajoute au stock initial du rapport
+            $siM += $m->where('type', 'initial')->where('emplacement', 'magasin')->sum('quantite');
+            $siP += $m->where('type', 'initial')->where('emplacement', 'presentoir')->sum('quantite');
+            $horsInitial = $m->where('type', '!=', 'initial');
+            $sf = $siM + $siP + $horsInitial->sum('quantite');
             $parJour = [];
             foreach ($ventes as $v) {
                 $j = (int) substr($v->date, 8, 2);
@@ -355,8 +362,8 @@ class LubStockController extends Controller
                 'ajustements' => round($ajust, 3), 'ecarts_inventaire' => round($ecartsInv, 3),
                 'valeur_ecarts' => round($ecartsInv * $p->prix_achat, 2),
                 'sf' => round($sf, 3),
-                'sf_magasin' => round($siM + $m->where('emplacement', 'magasin')->sum('quantite'), 3),
-                'sf_presentoir' => round($siP + $m->where('emplacement', 'presentoir')->sum('quantite'), 3),
+                'sf_magasin' => round($siM + $horsInitial->where('emplacement', 'magasin')->sum('quantite'), 3),
+                'sf_presentoir' => round($siP + $horsInitial->where('emplacement', 'presentoir')->sum('quantite'), 3),
                 'valeur_sf_achat' => round($sf * $p->prix_achat, 2),
                 'valeur_sf_vente' => round($sf * $p->prix_vente, 2),
                 'volume_vendu' => round($qVentes * $p->contenance, 3),

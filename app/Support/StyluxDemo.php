@@ -539,7 +539,7 @@ class StyluxDemo
                     'compte' => $q, 'ecart' => $q, 'prix_achat' => $p->prix_achat, 'created_at' => $d0 . ' 07:00:00', 'updated_at' => $d0 . ' 07:45:00',
                 ]);
                 if ($q) {
-                    $mvt('INV-' . $invId, $d0, 'inventaire', $p, $e, $q, $p->prix_achat, ['reference' => 'INV-2026-001', 'inventaire_id' => $invId, 'user_id' => $gerant, 'commentaire' => "Stock initial"]);
+                    $mvt('INV-' . $invId, $d0, 'initial', $p, $e, $q, $p->prix_achat, ['reference' => 'INV-2026-001', 'inventaire_id' => $invId, 'user_id' => $gerant, 'commentaire' => "Stock initial"]);
                 }
             }
         }
