@@ -14,7 +14,7 @@ class FactureController extends Controller
 {
     public function index(Request $request)
     {
-        $q = Facture::with('client:id,nom')->orderByDesc('annee')->orderByDesc('sequence');
+        $q = Facture::with('client:id,nom', 'user:id,name')->orderByDesc('annee')->orderByDesc('sequence');
         if ($request->filled('client_id')) {
             $q->where('client_id', $request->client_id);
         }
@@ -80,7 +80,7 @@ class FactureController extends Controller
             ]);
         });
 
-        return response()->json($facture->load('client:id,nom'), 201);
+        return response()->json($facture->load('client:id,nom', 'user:id,name'), 201);
     }
 
     public function annuler(Request $request, $id)

@@ -43,4 +43,10 @@ class Caisse extends Model
         return  $this->belongsTo(Pompe::class);
     }
    
+
+    // Signature : utilisateur qui a approuvé
+    public function approbateur()
+    {
+        return $this->belongsTo(User::class, 'approuve_par')->withTrashed();
+    }
 }

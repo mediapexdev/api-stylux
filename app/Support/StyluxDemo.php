@@ -125,6 +125,8 @@ class StyluxDemo
             throw new \RuntimeException("$deja caisse(s) existent déjà sur cette période : lancez d'abord la remise à zéro.");
         }
         $avecMode = DB::getSchemaBuilder()->hasColumn('vente_tpes', 'mode');
+        $avecSignature = DB::getSchemaBuilder()->hasColumn('caisses', 'approuve_par');
+        $gerant = DB::table('users')->whereIn('role_id', [2, 4])->whereNull('deleted_at')->orderBy('role_id')->value('id') ?: $chef;
 
         // --- Sauvegarde du paramétrage modifié (une seule fois)
         $fichier = rtrim($dossierSauvegarde, '/\\') . DIRECTORY_SEPARATOR . self::SAUVEGARDE;
@@ -233,6 +235,13 @@ class StyluxDemo
                 'created_at' => $date . ' 08:10:00', 'updated_at' => $ts,
             ]);
             $synthesesParDate[$date] = $syntheseId;
+            if ($avecSignature && $approuve) {
+                // Journée approuvée par le gérant le lendemain matin
+                DB::table('syntheses')->where('id', $syntheseId)->update([
+                    'approuve_par' => $gerant,
+                    'approuve_le' => date('Y-m-d', strtotime($date . ' +1 day')) . sprintf(' 09:%02d:00', self::ri(5, 55)),
+                ]);
+            }
             foreach ($cuves as $rid => $cv) {
                 DB::table('stocks')->insert([
                     'capacite' => round($cv['niveau'] + self::r(-12, 12)), // lecture de la jauge
@@ -251,6 +260,13 @@ class StyluxDemo
                     'approuve' => $approuve, 'netVer' => 0, 'coffre' => 0, 'ecart' => 0,
                     'created_at' => $date . ' 06:30:00', 'updated_at' => $ts,
                 ]);
+                if ($avecSignature && $approuve) {
+                    // Caisse approuvée par le chef de piste en fin de journée
+                    DB::table('caisses')->where('id', $caisseId)->update([
+                        'approuve_par' => $chef,
+                        'approuve_le' => $date . sprintf(' 21:%02d:00', self::ri(5, 55)),
+                    ]);
+                }
                 foreach ($pist as $pid => &$p) {
                     if ($p['pompe_id'] != $pompe->id || !isset($litres[$pid])) {
                         continue;

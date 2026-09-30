@@ -81,7 +81,7 @@ class DemandeModificationController extends Controller
             'reponse' => substr((string) $request->input('reponse', ''), 0, 2000) ?: null,
         ]);
         // La caisse redevient modifiable par le pompiste ; elle devra être approuvée à nouveau
-        Caisse::whereKey($demande->caisse_id)->update(['approuve' => 0]);
+        Caisse::whereKey($demande->caisse_id)->update(['approuve' => 0, 'approuve_par' => null, 'approuve_le' => null]);
         return $this->charger(DemandeModification::whereKey($demande->id))->first();
     }
 

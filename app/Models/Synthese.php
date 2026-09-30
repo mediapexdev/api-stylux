@@ -32,4 +32,10 @@ class Synthese extends Model
        return $this->hasMany(Stock::class);
     }    
     
+
+    // Signature : utilisateur qui a approuvé
+    public function approbateur()
+    {
+        return $this->belongsTo(User::class, 'approuve_par')->withTrashed();
+    }
 }

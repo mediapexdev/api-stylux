@@ -90,7 +90,7 @@ class CaisseController extends Controller
 
         //$test=array_merge($caisse,$data);
         return [
-            'caisse' => $caisse->load("user"),
+            'caisse' => $caisse->load("user", "approbateur:id,name"),
             'pompiste' => $caisse->user()->first(),
             'venteTpes' => $caisse->venteTpes()->get(),
             'bonClients' => $caisse->bonClients()->get(),
@@ -166,8 +166,8 @@ class CaisseController extends Controller
     }
     public function journee()
     {
-        $caisses = Caisse::select('id', 'coffre', 'netVer', 'pompe_id', 'user_id', 'created_at', 'approuve', 'date_caisse', 'ecart')
-            ->with('pompe', 'user')
+        $caisses = Caisse::select('id', 'coffre', 'netVer', 'pompe_id', 'user_id', 'created_at', 'approuve', 'date_caisse', 'ecart', 'approuve_par', 'approuve_le')
+            ->with('pompe', 'user', 'approbateur:id,name')
             ->orderBy('date_caisse', 'DESC')
             ->get()
             ->groupBy(function ($date) {
@@ -185,12 +185,12 @@ class CaisseController extends Controller
     {
         $synthese = null;
         $clients = null;
-        $caisses = Caisse::select('id', 'coffre', 'netVer', 'pompe_id', 'user_id', 'created_at', 'approuve', 'date_caisse', 'ecart')
-            ->with('pompe', 'user')
+        $caisses = Caisse::select('id', 'coffre', 'netVer', 'pompe_id', 'user_id', 'created_at', 'approuve', 'date_caisse', 'ecart', 'approuve_par', 'approuve_le')
+            ->with('pompe', 'user', 'approbateur:id,name')
             ->where('date_caisse', $date)
             ->get();
         if ($caisses) {
-            $synthese = Synthese::where('date', $date)->first();
+            $synthese = Synthese::with('approbateur:id,name')->where('date', $date)->first();
             if ($synthese) {
                 $clients = Client::whereHas('encaissements', function ($q) use ($synthese) {
                     $q->where('synthese_id', $synthese->id);
@@ -235,8 +235,14 @@ class CaisseController extends Controller
             abort(403);
         }
         $caisse = Caisse::find($id);
-        $caisse->update(['approuve' => $caisse->approuve ? false : true]);
-        return $caisse;
+        $approuve = !$caisse->approuve;
+        // Signature : qui a approuvé et quand (effacée si l'approbation est retirée)
+        $caisse->update([
+            'approuve' => $approuve,
+            'approuve_par' => $approuve ? optional(Auth::user())->id : null,
+            'approuve_le' => $approuve ? Carbon::now() : null,
+        ]);
+        return $caisse->load('approbateur:id,name');
     }
 
 
@@ -478,14 +484,14 @@ class CaisseController extends Controller
     public function rapport_par_date($date)
     {
         $synthese = null;
-        $caisses = Caisse::select('id', 'coffre', 'netVer', 'pompe_id', 'user_id', 'created_at', 'approuve', 'date_caisse', 'ecart')
-            ->with('pompe.pistolets', 'compteurs', 'user', 'depenses', 'venteTpes', 'bonClients')
+        $caisses = Caisse::select('id', 'coffre', 'netVer', 'pompe_id', 'user_id', 'created_at', 'approuve', 'date_caisse', 'ecart', 'approuve_par', 'approuve_le')
+            ->with('pompe.pistolets', 'compteurs', 'user', 'depenses', 'venteTpes', 'bonClients', 'approbateur:id,name')
             ->where('date_caisse', $date)
             ->get();
         if ($caisses) {
-            $synthese = Synthese::where('date', $date)->first();
+            $synthese = Synthese::with('approbateur:id,name')->where('date', $date)->first();
             if ($synthese) {
-                $synthese = $synthese->load(['receptions', 'commande_cars', 'remise_cuves', 'stocks', 'encaissements']);
+                $synthese = $synthese->load(['receptions', 'commande_cars', 'remise_cuves', 'stocks', 'encaissements', 'approbateur:id,name']);
             }
         }
         $data = [];

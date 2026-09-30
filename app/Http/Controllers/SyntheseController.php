@@ -56,7 +56,7 @@ class SyntheseController extends Controller
     {
 
         $synthese = Synthese::find($id);
-        $synthese->load(['receptions', 'commande_cars', 'remise_cuves', 'stocks']);
+        $synthese->load(['receptions', 'commande_cars', 'remise_cuves', 'stocks', 'approbateur:id,name']);
         $caisses = Caisse::with(['pompe.pistolets', 'pompe', 'venteTpes', 'depenses', 'bonClients'])->where('date_caisse', $synthese->date)->get();
         //return $caisses;
         $reservoirs = Reservoir::all();
@@ -224,7 +224,13 @@ class SyntheseController extends Controller
             abort(403);
         }
         $synthese = Synthese::find($id);
-        $synthese->update(['etat' => $synthese->etat ? false : true]);
+        $etat = !$synthese->etat;
+        // Signature : qui a approuvé la journée et quand
+        $synthese->update([
+            'etat' => $etat,
+            'approuve_par' => $etat ? optional(auth()->user())->id : null,
+            'approuve_le' => $etat ? now() : null,
+        ]);
         return 1;
     }
 }
