@@ -36,6 +36,7 @@ use App\Http\Controllers\EncaissementController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\DemandeModificationController;
 use App\Http\Controllers\IlotPompePistoletController;
 use App\Http\Controllers\ReservoirPistoletController;
 use App\Http\Controllers\CategorieController;
@@ -122,6 +123,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('clients', ClientController::class);
     Route::post('factures/{id}/annuler', [FactureController::class, 'annuler']);
     Route::apiResource('factures', FactureController::class)->only(['index', 'show', 'store']);
+    Route::get('demandes-modification', [DemandeModificationController::class, 'index']);
+    Route::post('demandes-modification', [DemandeModificationController::class, 'store']);
+    Route::post('demandes-modification/{id}/accepter', [DemandeModificationController::class, 'accepter']);
+    Route::post('demandes-modification/{id}/refuser', [DemandeModificationController::class, 'refuser']);
 
     Route::apiResource('ilots.pompes', IlotPompeController::class);
     Route::apiResource('categories.produits', CategorieProduitController::class);
