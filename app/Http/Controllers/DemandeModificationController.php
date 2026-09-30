@@ -21,6 +21,7 @@ class DemandeModificationController extends Controller
         return $q->with([
             'caisse:id,date_caisse,pompe_id,user_id,approuve',
             'caisse.pompe:id,numero',
+            'caisse.user:id,name',
             'demandeur:id,name',
             'decideur:id,name',
         ]);
