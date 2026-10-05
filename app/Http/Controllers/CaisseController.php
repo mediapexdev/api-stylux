@@ -146,7 +146,8 @@ class CaisseController extends Controller
                 return 0;
             }
              */
-        $caisse->update($request->all());
+        // Champs calcules ou de signature : jamais modifiables par ce formulaire
+        $caisse->update($request->except(['id', 'pompe', 'user', 'approbateur', 'approuve', 'approuve_par', 'approuve_le', 'created_at', 'updated_at', 'deleted_at']));
         return 1;
         // $caisse->update($request->all());
         // return 1;
@@ -189,6 +190,21 @@ class CaisseController extends Controller
             ->with('pompe', 'user', 'approbateur:id,name')
             ->where('date_caisse', $date)
             ->get();
+        // Chiffres saisis par le pompiste, visibles par le chef de piste avant la cloture de la caisse
+        foreach ($caisses as $caisse) {
+            $ventes = 0;
+            foreach (Compteur::where('caisse_id', $caisse->id)->get() as $c) {
+                $sortie = (float) $c->indexFerE - (float) $c->indexOuvE;
+                if ($c->indexFerE !== null && $sortie > 0) {
+                    $ventes += $sortie * (float) $c->prix;
+                }
+            }
+            $caisse->ventes = round($ventes, 2);
+            $caisse->non_recu = (float) $caisse->venteTpes()->sum('montant')
+                + (float) $caisse->bonClients()->sum('montant')
+                + (float) $caisse->depenses()->sum('montant');
+            $caisse->cloturee = ((float) $caisse->netVer != 0 || (float) $caisse->coffre != 0 || (float) $caisse->ecart != 0);
+        }
         if ($caisses) {
             $synthese = Synthese::with('approbateur:id,name')->where('date', $date)->first();
             if ($synthese) {
