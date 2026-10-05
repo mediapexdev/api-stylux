@@ -38,6 +38,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\DemandeModificationController;
 use App\Http\Controllers\LubStockController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\IlotPompePistoletController;
 use App\Http\Controllers\ReservoirPistoletController;
 use App\Http\Controllers\CategorieController;
@@ -143,6 +144,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('lub/inventaires/{id}/valider', [LubStockController::class, 'validerInventaire']);
     Route::delete('lub/inventaires/{id}', [LubStockController::class, 'supprimerInventaire']);
     Route::get('lub/rapport', [LubStockController::class, 'rapport']);
+
+    // Module finance (commandes carburants et lubrifiants, plafond, échéances, avoirs TPE)
+    Route::get('fin/tableau', [FinanceController::class, 'tableau']);
+    Route::get('fin/parametres', [FinanceController::class, 'parametres']);
+    Route::put('fin/parametres', [FinanceController::class, 'enregistrerParametres']);
+    Route::get('fin/commandes', [FinanceController::class, 'commandes']);
+    Route::post('fin/commandes', [FinanceController::class, 'enregistrer']);
+    Route::put('fin/commandes/{id}', [FinanceController::class, 'enregistrer']);
+    Route::delete('fin/commandes/{id}', [FinanceController::class, 'supprimer']);
+    Route::post('fin/commandes/{id}/livrer', [FinanceController::class, 'livrer']);
+    Route::post('fin/commandes/{id}/payer', [FinanceController::class, 'payer']);
+    Route::post('fin/commandes/{id}/rouvrir', [FinanceController::class, 'rouvrir']);
 
     Route::apiResource('ilots.pompes', IlotPompeController::class);
     Route::apiResource('categories.produits', CategorieProduitController::class);
