@@ -178,6 +178,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('approuver_ficheA/{id}', [TabaccController::class, 'approuver_ficheA']);
     Route::get('approuver_stock/{id}', [TabinventaireController::class, 'approuver_stock']);
     Route::get('approuver_synthese/{id}', [SyntheseController::class, 'approuver']);
+    Route::get('controle-stocks/{date}', [SyntheseController::class, 'controleStocks']);
 
 
     Route::apiResource('syntheses', SyntheseController::class);

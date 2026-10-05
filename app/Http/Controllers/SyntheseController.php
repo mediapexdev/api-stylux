@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Stock;
+use App\Models\Compteur;
+use Carbon\Carbon;
 use App\Models\Caisse;
 use App\Models\Client;
 use App\Models\Synthese;
@@ -232,5 +234,88 @@ class SyntheseController extends Controller
             'approuve_le' => $etat ? now() : null,
         ]);
         return 1;
+    }
+
+    /**
+     * Controle des stocks carburant d'une journee, par produit :
+     * stock theorique = stock 07h00 + receptions + remises en cuve - sorties aux index (electroniques)
+     * stock reel = stock 07h00 saisi le lendemain ; tolerance = 5 pour 1000 des sorties (contrat Vivo)
+     */
+    public function controleStocks($date)
+    {
+        $lendemain = Carbon::parse($date)->addDay()->toDateString();
+        $synthese = Synthese::where('date', $date)->first();
+        $suivante = Synthese::where('date', $lendemain)->first();
+        $produit = function ($carburant) {
+            return stripos((string) $carburant, 'super') !== false ? 'super' : 'gasoil';
+        };
+
+        $lignes = [];
+        foreach (['super', 'gasoil'] as $p) {
+            $lignes[$p] = [
+                'produit' => $p, 'capacite' => 0, 'ouverture' => null, 'receptions' => 0, 'remises' => 0,
+                'sorties' => 0, 'theorique' => null, 'reel' => null, 'ecart' => null, 'tolerance' => null, 'cuves' => 0,
+            ];
+        }
+        $reservoirs = Reservoir::all();
+        $cuveProduit = [];
+        foreach ($reservoirs as $r) {
+            $p = $produit($r->carburant);
+            $cuveProduit[$r->id] = $p;
+            $lignes[$p]['capacite'] += (float) $r->capacite;
+            $lignes[$p]['cuves']++;
+        }
+
+        $somme = function ($model, $syntheseId) use ($cuveProduit) {
+            $res = ['super' => null, 'gasoil' => null];
+            if (!$syntheseId) {
+                return $res;
+            }
+            foreach ($model::where('synthese_id', $syntheseId)->get() as $l) {
+                $p = $cuveProduit[$l->reservoir_id] ?? null;
+                if ($p) {
+                    $res[$p] = ($res[$p] ?? 0) + (float) $l->capacite;
+                }
+            }
+            return $res;
+        };
+        $ouv = $somme(Stock::class, optional($synthese)->id);
+        $rec = $somme(Reception::class, optional($synthese)->id);
+        $rem = $somme(RemiseCuve::class, optional($synthese)->id);
+        $fer = $somme(Stock::class, optional($suivante)->id);
+
+        $caisses = Caisse::where('date_caisse', $date)->pluck('id');
+        $nbCaisses = $caisses->count();
+        foreach (Compteur::with('pistolet')->whereIn('caisse_id', $caisses)->get() as $c) {
+            $sortie = (float) $c->indexFerE - (float) $c->indexOuvE;
+            if ($c->indexFerE !== null && $sortie > 0 && $c->pistolet) {
+                $lignes[$produit($c->pistolet->carburant)]['sorties'] += $sortie;
+            }
+        }
+
+        foreach ($lignes as $p => &$l) {
+            $l['ouverture'] = $ouv[$p];
+            $l['receptions'] = (float) ($rec[$p] ?? 0);
+            $l['remises'] = (float) ($rem[$p] ?? 0);
+            $l['sorties'] = round($l['sorties'], 2);
+            $l['reel'] = $fer[$p];
+            if ($l['ouverture'] !== null) {
+                $l['theorique'] = round($l['ouverture'] + $l['receptions'] + $l['remises'] - $l['sorties'], 2);
+            }
+            if ($l['theorique'] !== null && $l['reel'] !== null) {
+                $l['ecart'] = round($l['reel'] - $l['theorique'], 2);
+            }
+            $l['tolerance'] = round($l['sorties'] * 0.005, 2);
+        }
+        unset($l);
+
+        return [
+            'date' => $date,
+            'lendemain' => $lendemain,
+            'caisses' => $nbCaisses,
+            'stock_saisi' => $ouv['super'] !== null || $ouv['gasoil'] !== null,
+            'stock_lendemain_saisi' => $fer['super'] !== null || $fer['gasoil'] !== null,
+            'produits' => array_values($lignes),
+        ];
     }
 }
