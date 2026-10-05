@@ -9,9 +9,8 @@ class ImportFinCommandesHistorique extends Migration
 {
     public function up()
     {
-        if (DB::table('fin_commandes')->where('source', 'import')->exists()) {
-            return;
-        }
+        // Repart de zéro si une tentative précédente a été interrompue
+        DB::table('fin_commandes')->where('source', 'import')->delete();
         $fichier = database_path('data/fin_commandes_historique.json');
         if (!is_file($fichier)) {
             return;
@@ -19,20 +18,26 @@ class ImportFinCommandesHistorique extends Migration
         $lignes = json_decode(file_get_contents($fichier), true) ?: [];
         $now = now();
         $rows = [];
+        $date = function ($v) {
+            return is_string($v) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) ? $v : null;
+        };
         foreach ($lignes as $l) {
-            $carb = $l['type'] === 'carburant';
-            $paiement = $l['date_paiement'] ?: $l['echeance'];
+            $paiement = $date($l['date_paiement']) ?: $date($l['echeance']);
+            $commande = $date($l['date_commande']) ?: $date($l['date_livraison']) ?: $paiement;
+            if (!$commande) {
+                continue;
+            }
             $rows[] = [
-                'numero' => $l['numero'],
+                'numero' => $l['numero'] ? substr($l['numero'], 0, 40) : null,
                 'type' => $l['type'],
-                'date_commande' => $l['date_commande'],
+                'date_commande' => $commande,
                 'super_l' => $l['super_l'] ?: 0,
                 'gasoil_l' => $l['gasoil_l'] ?: 0,
                 'prix_super' => null,
                 'prix_gasoil' => null,
                 'montant' => $l['montant'],
-                'date_livraison' => $l['date_livraison'],
-                'echeance' => $l['echeance'],
+                'date_livraison' => $date($l['date_livraison']),
+                'echeance' => $date($l['echeance']),
                 'statut' => 'payee',
                 'date_paiement' => $paiement,
                 'mode_paiement' => $l['montant_cheque'] > 0 ? 'cheque' : null,
@@ -44,9 +49,11 @@ class ImportFinCommandesHistorique extends Migration
                 'updated_at' => $now,
             ];
         }
-        foreach (array_chunk($rows, 100) as $lot) {
-            DB::table('fin_commandes')->insert($lot);
-        }
+        DB::transaction(function () use ($rows) {
+            foreach (array_chunk($rows, 50) as $lot) {
+                DB::table('fin_commandes')->insert($lot);
+            }
+        });
     }
 
     public function down()
