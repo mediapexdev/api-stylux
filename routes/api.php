@@ -39,6 +39,7 @@ use App\Http\Controllers\FactureController;
 use App\Http\Controllers\DemandeModificationController;
 use App\Http\Controllers\LubStockController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\PaieController;
 use App\Http\Controllers\IlotPompePistoletController;
 use App\Http\Controllers\ReservoirPistoletController;
 use App\Http\Controllers\CategorieController;
@@ -156,6 +157,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('fin/commandes/{id}/livrer', [FinanceController::class, 'livrer']);
     Route::post('fin/commandes/{id}/payer', [FinanceController::class, 'payer']);
     Route::post('fin/commandes/{id}/rouvrir', [FinanceController::class, 'rouvrir']);
+    // Module paie (salariés, bulletins de salaire, livre de paie)
+    Route::get('paie/parametres', [PaieController::class, 'parametres']);
+    Route::put('paie/parametres', [PaieController::class, 'enregistrerParametres']);
+    Route::get('paie/employes', [PaieController::class, 'employes']);
+    Route::post('paie/employes', [PaieController::class, 'enregistrerEmploye']);
+    Route::post('paie/employes/importer', [PaieController::class, 'importerUtilisateurs']);
+    Route::put('paie/employes/{id}', [PaieController::class, 'enregistrerEmploye']);
+    Route::delete('paie/employes/{id}', [PaieController::class, 'supprimerEmploye']);
+    Route::post('paie/calculer', [PaieController::class, 'calculer']);
+    Route::get('paie/bulletins', [PaieController::class, 'bulletins']);
+    Route::post('paie/bulletins', [PaieController::class, 'enregistrerBulletin']);
+    Route::post('paie/bulletins/generer', [PaieController::class, 'generer']);
+    Route::get('paie/bulletins/{id}', [PaieController::class, 'bulletin']);
+    Route::delete('paie/bulletins/{id}', [PaieController::class, 'supprimerBulletin']);
+    Route::post('paie/bulletins/{id}/valider', [PaieController::class, 'valider']);
+    Route::post('paie/bulletins/{id}/payer', [PaieController::class, 'payer']);
+    Route::post('paie/bulletins/{id}/rouvrir', [PaieController::class, 'rouvrir']);
+    Route::get('paie/livre', [PaieController::class, 'livre']);
 
     Route::apiResource('ilots.pompes', IlotPompeController::class);
     Route::apiResource('categories.produits', CategorieProduitController::class);
